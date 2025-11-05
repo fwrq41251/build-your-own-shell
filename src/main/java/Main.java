@@ -19,7 +19,7 @@ public class Main {
   }
 
   enum CommandName {
-    exit, echo, type, pwd;
+    exit, echo, type, pwd, cd;
 
     static CommandName of(String name) {
       try {
@@ -68,6 +68,16 @@ public class Main {
       case pwd -> {
         String currentDirectory = System.getProperty("user.dir");
         System.out.println(currentDirectory);
+      }
+      case cd -> {
+        var arg0 = command.args[0];
+        var path = Paths.get(arg0);
+        if (!Files.isDirectory(path)) {
+          var error = String.format("cd: %s: No such file or directory", arg0);
+          System.out.println(error);
+        } else {
+          System.setProperty("user.dir", arg0);
+        }
       }
     }
   }
