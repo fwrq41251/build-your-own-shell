@@ -1,5 +1,5 @@
+import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
@@ -28,7 +28,7 @@ public class Main {
     }
   }
 
-  record Command(String command, String[] args) {
+  record Command(String command, String[] args, String[] commandWithArgs) {
   }
 
   private static Command parse(String command) {
@@ -37,15 +37,14 @@ public class Main {
     }
     var split = command.split(" ");
     var args = split.length > 1 ? Arrays.copyOfRange(split, 1, split.length) : new String[0];
-    return new Command(split[0], args);
+    return new Command(split[0], args, split);
   }
 
-  private static void run(Command command) {
+  private static void run(Command command) throws IOException, InterruptedException {
     var commandName = CommandName.of(command.command);
 
     if (Objects.isNull(commandName)) {
-      var error = String.format("%s: command not found", command.command);
-      System.out.println(error);
+      runNotBuiltin(command);
       return;
     }
 
@@ -64,6 +63,22 @@ public class Main {
       case type -> {
         runType(command);
       }
+    }
+  }
+
+  private static void runNotBuiltin(Command command) throws IOException, InterruptedException {
+    var executable = findExecutable(command.command);
+    if (executable != null) {
+      var processBuilder = new ProcessBuilder(command.commandWithArgs);
+      processBuilder.inheritIO();
+      var process = processBuilder.start();
+      int exitCode = process.waitFor();
+      if (exitCode != 0) {
+        System.out.println(command.command + " exited with error code: " + exitCode);
+      }
+    } else {
+      var error = String.format("%s: command not found", command.command);
+      System.out.println(error);
     }
   }
 
@@ -90,10 +105,10 @@ public class Main {
   }
 
   private static String findExecutable(String commandName) {
-    String pathEnv = System.getenv("PATH");
-    String[] directories = pathEnv.split(System.getProperty("path.separator"));
+    var pathEnv = System.getenv("PATH");
+    var directories = pathEnv.split(System.getProperty("path.separator"));
 
-    for (String dir : directories) {
+    for (var dir : directories) {
       var filePath = Paths.get(dir, commandName);
       if (Files.isExecutable(filePath)) {
         return filePath.toAbsolutePath().toString();
