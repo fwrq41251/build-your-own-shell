@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Scanner;
 
 public class Main {
+  private static final String PATH = "PATH";
+
   public static void main(String[] args) throws Exception {
     try (var scanner = new Scanner(System.in)) {
       while (true) {
@@ -17,7 +19,7 @@ public class Main {
   }
 
   enum CommandName {
-    exit, echo, type;
+    exit, echo, type, pwd;
 
     static CommandName of(String name) {
       try {
@@ -63,6 +65,10 @@ public class Main {
       case type -> {
         runType(command);
       }
+      case pwd -> {
+        String currentDirectory = System.getProperty("user.dir");
+        System.out.println(currentDirectory);
+      }
     }
   }
 
@@ -105,7 +111,7 @@ public class Main {
   }
 
   private static String findExecutable(String commandName) {
-    var pathEnv = System.getenv("PATH");
+    var pathEnv = System.getenv(PATH);
     var directories = pathEnv.split(System.getProperty("path.separator"));
 
     for (var dir : directories) {
