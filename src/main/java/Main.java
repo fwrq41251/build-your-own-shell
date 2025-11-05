@@ -11,31 +11,26 @@ public class Main {
     }
   }
 
-  enum CommandType {
-    exit, unknown
-  }
-
-  record Command(CommandType command, int arg) {
+  record Command(String command, int arg) {
   }
 
   private static Command parse(String command) {
-    var args = command.split(" ");
-    var arg = Integer.parseInt(args[1]);
-    var commandType = CommandType.valueOf(args[0]);
-    if (commandType == null) {
-      commandType = CommandType.unknown;
+    if (command == null || command.isEmpty()) {
+      throw new IllegalArgumentException("command cannot be null or empty");
     }
-    return new Command(commandType, arg);
+    var args = command.split(" ");
+    var arg = args.length > 1 ? Integer.parseInt(args[1]) : -1;
+    return new Command(args[0], arg);
   }
 
   private static void run(Command command) {
     switch (command.command) {
-      case unknown -> {
-        var error = String.format("%s: command not found", command);
-        System.out.println(error);
-      }
-      case exit -> {
+      case "exit" -> {
         System.exit(command.arg);
+      }
+      default -> {
+        var error = String.format("%s: command not found", command.command);
+        System.out.println(error);
       }
     }
   }
