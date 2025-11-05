@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
@@ -7,6 +8,7 @@ import java.util.Scanner;
 
 public class Main {
   private static final String PATH = "PATH";
+  private static Path pwd = Paths.get(System.getProperty("user.dir"));
 
   public static void main(String[] args) throws Exception {
     try (var scanner = new Scanner(System.in)) {
@@ -66,19 +68,31 @@ public class Main {
         runType(command);
       }
       case pwd -> {
-        String currentDirectory = System.getProperty("user.dir");
-        System.out.println(currentDirectory);
+        System.out.println(pwd);
       }
       case cd -> {
-        var arg0 = command.args[0];
-        var path = Paths.get(arg0);
-        if (!Files.isDirectory(path)) {
-          var error = String.format("cd: %s: No such file or directory", arg0);
-          System.out.println(error);
-        } else {
-          System.setProperty("user.dir", arg0);
-        }
+        runCd(command);
       }
+    }
+  }
+
+  private static void runCd(Command command) {
+    if (command.args.length == 0) {
+      return;
+    }
+    var targetPath = command.args[0];
+    var separator = System.getProperty("file.separator");
+    if (targetPath.equals("~") || targetPath.startsWith("~" + separator)) {
+      var homeDir = System.getenv("HOME");
+      targetPath = targetPath.replaceFirst("~", homeDir);
+    }
+
+    var newPath = pwd.resolve(targetPath).normalize();
+    if (!Files.isDirectory(newPath)) {
+      var error = String.format("cd: %s: No such file or directory", newPath);
+      System.out.println(error);
+    } else {
+      pwd = newPath;
     }
   }
 
