@@ -1,5 +1,5 @@
 import java.util.Arrays;
-import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class Main {
@@ -9,6 +9,18 @@ public class Main {
         System.out.print("$ ");
         var command = parse(scanner.nextLine());
         run(command);
+      }
+    }
+  }
+
+  enum CommandName {
+    exit, echo, type;
+
+    static CommandName of(String name) {
+      try {
+        return valueOf(name);
+      } catch (IllegalArgumentException e) {
+        return null;
       }
     }
   }
@@ -26,22 +38,41 @@ public class Main {
   }
 
   private static void run(Command command) {
-    switch (command.command) {
-      case "exit" -> {
+    var commandName = CommandName.of(command.command);
+
+    if (Objects.isNull(commandName)) {
+      var error = String.format("%s: command not found", command.command);
+      System.out.println(error);
+      return;
+    }
+
+    switch (commandName) {
+      case exit -> {
         int status = 0;
         if (command.args.length != 0) {
           status = Integer.parseInt(command.args[0]);
         }
         System.exit(status);
       }
-      case "echo" -> {
+      case echo -> {
         var message = String.join(" ", command.args);
         System.out.println(message);
       }
-      default -> {
-        var error = String.format("%s: command not found", command.command);
-        System.out.println(error);
+      case type -> {
+        if (command.args.length == 0) {
+          throw new IllegalArgumentException("type command requires an argument");
+        }
+        var arg0 = command.args[0];
+        var toType = CommandName.of(arg0);
+        if (toType == null) {
+          var error = String.format("%s: not found", arg0);
+          System.out.println(error);
+        } else {
+          var message = String.format("%s is a shell builtin", toType);
+          System.out.println(message);
+        }
       }
     }
   }
+
 }
