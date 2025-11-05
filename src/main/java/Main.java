@@ -1,3 +1,6 @@
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Scanner;
@@ -59,20 +62,45 @@ public class Main {
         System.out.println(message);
       }
       case type -> {
-        if (command.args.length == 0) {
-          throw new IllegalArgumentException("type command requires an argument");
-        }
-        var arg0 = command.args[0];
-        var toType = CommandName.of(arg0);
-        if (toType == null) {
-          var error = String.format("%s: not found", arg0);
-          System.out.println(error);
-        } else {
-          var message = String.format("%s is a shell builtin", toType);
-          System.out.println(message);
-        }
+        runType(command);
       }
     }
+  }
+
+  private static void runType(Command command) {
+    if (command.args.length == 0) {
+      System.out.println("type command requires an argument");
+      return;
+    }
+    var arg0 = command.args[0];
+    var toType = CommandName.of(arg0);
+    if (toType == null) {
+      var executable = findExecutable(arg0);
+      if (executable != null) {
+        var message = String.format("%s is %s", arg0, executable);
+        System.out.println(message);
+      } else {
+        var error = String.format("%s: not found", arg0);
+        System.out.println(error);
+      }
+    } else {
+      var message = String.format("%s is a shell builtin", toType);
+      System.out.println(message);
+    }
+  }
+
+  private static String findExecutable(String commandName) {
+    String pathEnv = System.getenv("PATH");
+    String[] directories = pathEnv.split(System.getProperty("path.separator"));
+
+    for (String dir : directories) {
+      var filePath = Paths.get(dir, commandName);
+      if (Files.isExecutable(filePath)) {
+        return filePath.toAbsolutePath().toString();
+      }
+    }
+
+    return null;
   }
 
 }
