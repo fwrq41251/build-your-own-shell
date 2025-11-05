@@ -1,3 +1,5 @@
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -11,22 +13,30 @@ public class Main {
     }
   }
 
-  record Command(String command, int arg) {
+  record Command(String command, String[] args) {
   }
 
   private static Command parse(String command) {
     if (command == null || command.isEmpty()) {
       throw new IllegalArgumentException("command cannot be null or empty");
     }
-    var args = command.split(" ");
-    var arg = args.length > 1 ? Integer.parseInt(args[1]) : -1;
-    return new Command(args[0], arg);
+    var split = command.split(" ");
+    var args = split.length > 1 ? Arrays.copyOfRange(split, 1, split.length) : new String[0];
+    return new Command(split[0], args);
   }
 
   private static void run(Command command) {
     switch (command.command) {
       case "exit" -> {
-        System.exit(command.arg);
+        int status = 0;
+        if (command.args.length != 0) {
+          status = Integer.parseInt(command.args[0]);
+        }
+        System.exit(status);
+      }
+      case "echo" -> {
+        var message = String.join(" ", command.args);
+        System.out.println(message);
       }
       default -> {
         var error = String.format("%s: command not found", command.command);
