@@ -53,21 +53,33 @@ public class Main {
     return new Command(split.get(0), args, commandWithArgs);
   }
 
+  private enum QuteMode {
+    singleQuote, doubleQuote
+  }
+
   private static List<String> splitCommand(String command) {
     var result = new ArrayList<String>();
     var temp = new StringBuilder();
-    var inQuotation = false;
+    QuteMode quteMode = null;
 
     for (char ch : command.toCharArray()) {
-      if (inQuotation) {
+      if (quteMode == QuteMode.singleQuote) {
         if (ch == '\'') {
-          inQuotation = false;
+          quteMode = null;
+        } else {
+          temp.append(ch);
+        }
+      } else if (quteMode == QuteMode.doubleQuote) {
+        if (ch == '\"') {
+          quteMode = null;
         } else {
           temp.append(ch);
         }
       } else {
         if (ch == '\'') {
-          inQuotation = true;
+          quteMode = QuteMode.singleQuote;
+        } else if (ch == '\"') {
+          quteMode = QuteMode.doubleQuote;
         } else if (ch == ' ') {
           addTemp(result, temp);
         } else {
@@ -76,11 +88,12 @@ public class Main {
       }
     }
 
+    if (quteMode != null) {
+      throw new IllegalArgumentException("Unclosed quote.");
+    }
+
     addTemp(result, temp);
 
-    if (inQuotation) {
-      throw new IllegalArgumentException("Unclosed single quote.");
-    }
     return result;
   }
 
