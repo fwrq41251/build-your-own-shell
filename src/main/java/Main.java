@@ -2,7 +2,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -39,9 +41,54 @@ public class Main {
     if (command == null || command.isEmpty()) {
       throw new IllegalArgumentException("command cannot be null or empty");
     }
-    var split = command.split(" ");
-    var args = split.length > 1 ? Arrays.copyOfRange(split, 1, split.length) : new String[0];
-    return new Command(split[0], args, split);
+
+    List<String> split = splitCommand(command);
+    if (split.isEmpty()) {
+      throw new IllegalArgumentException("command cannot be empty");
+    }
+
+    String[] commandWithArgs = split.toArray(new String[0]);
+    String[] args = Arrays.copyOfRange(commandWithArgs, 1, commandWithArgs.length);
+
+    return new Command(split.get(0), args, commandWithArgs);
+  }
+
+  private static List<String> splitCommand(String command) {
+    var result = new ArrayList<String>();
+    var temp = new StringBuilder();
+    var inQuotation = false;
+
+    for (char ch : command.toCharArray()) {
+      if (inQuotation) {
+        if (ch == '\'') {
+          inQuotation = false;
+        } else {
+          temp.append(ch);
+        }
+      } else {
+        if (ch == '\'') {
+          inQuotation = true;
+        } else if (ch == ' ') {
+          addTemp(result, temp);
+        } else {
+          temp.append(ch);
+        }
+      }
+    }
+
+    addTemp(result, temp);
+
+    if (inQuotation) {
+      throw new IllegalArgumentException("Unclosed single quote.");
+    }
+    return result;
+  }
+
+  private static void addTemp(List<String> result, StringBuilder temp) {
+    if (temp.length() > 0) {
+      result.add(temp.toString());
+      temp.setLength(0);
+    }
   }
 
   private static void run(Command command) throws IOException, InterruptedException {
