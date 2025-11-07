@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.Set;
 
 public class Main {
+  private static final String HOME = "~";
   private static final String PATH = "PATH";
   private static Path pwd = Paths.get(System.getProperty("user.dir"));
 
@@ -62,6 +64,7 @@ public class Main {
     var temp = new StringBuilder();
     QuteMode quteMode = null;
     var escape = false;
+    var toEscape = Set.of('\"', '\\', '$', '`');
 
     for (char ch : command.toCharArray()) {
       if (quteMode == QuteMode.singleQuote) {
@@ -71,10 +74,20 @@ public class Main {
           temp.append(ch);
         }
       } else if (quteMode == QuteMode.doubleQuote) {
-        if (ch == '\"') {
-          quteMode = null;
-        } else {
+        if (escape) {
+          if (!toEscape.contains(ch)) {
+            temp.append('\\');
+          }
           temp.append(ch);
+          escape = false;
+        } else {
+          if (ch == '\"') {
+            quteMode = null;
+          } else if (ch == '\\') {
+            escape = true;
+          } else {
+            temp.append(ch);
+          }
         }
       } else {
         if (escape) {
@@ -150,9 +163,9 @@ public class Main {
     }
     var targetPath = command.args[0];
     var separator = System.getProperty("file.separator");
-    if (targetPath.equals("~") || targetPath.startsWith("~" + separator)) {
+    if (targetPath.equals(HOME) || targetPath.startsWith(HOME + separator)) {
       var homeDir = System.getenv("HOME");
-      targetPath = targetPath.replaceFirst("~", homeDir);
+      targetPath = targetPath.replaceFirst(HOME, homeDir);
     }
 
     var newPath = pwd.resolve(targetPath).normalize();
