@@ -61,6 +61,7 @@ public class Main {
     var result = new ArrayList<String>();
     var temp = new StringBuilder();
     QuteMode quteMode = null;
+    var escape = false;
 
     for (char ch : command.toCharArray()) {
       if (quteMode == QuteMode.singleQuote) {
@@ -76,14 +77,21 @@ public class Main {
           temp.append(ch);
         }
       } else {
-        if (ch == '\'') {
-          quteMode = QuteMode.singleQuote;
-        } else if (ch == '\"') {
-          quteMode = QuteMode.doubleQuote;
-        } else if (ch == ' ') {
-          addTemp(result, temp);
-        } else {
+        if (escape) {
           temp.append(ch);
+          escape = false;
+        } else {
+          if (ch == '\'') {
+            quteMode = QuteMode.singleQuote;
+          } else if (ch == '\"') {
+            quteMode = QuteMode.doubleQuote;
+          } else if (ch == ' ') {
+            addTemp(result, temp);
+          } else if (ch == '\\') {
+            escape = true;
+          } else {
+            temp.append(ch);
+          }
         }
       }
     }
