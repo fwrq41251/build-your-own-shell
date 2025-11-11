@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -81,6 +82,16 @@ public class Main {
         type = RedirectType.stderr;
         break;
       }
+      if (s.equals(">>") || s.equals("1>>")) {
+        rediectAt = i;
+        type = RedirectType.stdout_append;
+        break;
+      }
+      if (s.equals("2>>")) {
+        rediectAt = i;
+        type = RedirectType.stderr_append;
+        break;
+      }
     }
     return new Redirect(type, rediectAt);
   }
@@ -89,7 +100,7 @@ public class Main {
   }
 
   private enum RedirectType {
-    stdout, stderr
+    stdout, stderr, stdout_append, stderr_append
   }
 
   private enum QuteMode {
@@ -200,10 +211,18 @@ public class Main {
       switch (command.redirectType) {
         case stdout -> {
           var bytes = String.format("%s\n", message).getBytes();
-          Files.write(path, bytes);
+          Files.write(path, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
         case stderr -> {
-          Files.write(path, "".getBytes());
+          Files.write(path, "".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+          System.out.println(message);
+        }
+        case stdout_append -> {
+          var bytes = String.format("%s\n", message).getBytes();
+          Files.write(path, bytes, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        }
+        case stderr_append -> {
+          Files.write(path, "".getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
           System.out.println(message);
         }
       }
@@ -246,6 +265,14 @@ public class Main {
           }
           case stderr -> {
             processBuilder.redirectError(file);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+          }
+          case stdout_append -> {
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.appendTo(file));
+            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+          }
+          case stderr_append -> {
+            processBuilder.redirectError(ProcessBuilder.Redirect.appendTo(file));
             processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
           }
         }
