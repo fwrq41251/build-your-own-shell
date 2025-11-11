@@ -7,8 +7,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.Set;
+
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.impl.DefaultParser;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.TerminalBuilder;
 
 public class Main {
   private static final String HOME = "~";
@@ -16,10 +20,26 @@ public class Main {
   private static Path pwd = Paths.get(System.getProperty("user.dir"));
 
   public static void main(String[] args) throws Exception {
-    try (var scanner = new Scanner(System.in)) {
-      while (true) {
-        System.out.print("$ ");
-        var command = parse(scanner.nextLine());
+    var terminal = TerminalBuilder.builder()
+        .system(true)
+        .build();
+
+    var parser = new DefaultParser();
+    parser.setEscapeChars(new char[0]);
+    var stringsCompleter = new StringsCompleter("echo", "exit");
+    var lineReader = LineReaderBuilder.builder()
+        .terminal(terminal)
+        .completer(stringsCompleter)
+        .parser(parser)
+        .build();
+
+    String prompt = "$ ";
+
+    while (true) {
+      String line = lineReader.readLine(prompt);
+
+      if (line != null && !line.isEmpty()) {
+        var command = parse(line);
         run(command);
       }
     }
