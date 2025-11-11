@@ -76,6 +76,11 @@ public class Main {
         type = RedirectType.stdout;
         break;
       }
+      if (s.equals("2>")) {
+        rediectAt = i;
+        type = RedirectType.stderr;
+        break;
+      }
     }
     return new Redirect(type, rediectAt);
   }
@@ -190,10 +195,18 @@ public class Main {
 
   private static void runEcho(Command command) throws IOException {
     var message = String.join(" ", command.args);
-    if (command.redirectType == RedirectType.stdout) {
+    if (command.redirectType != null) {
       var path = Path.of(command.redirectTo);
-      var bytes = String.format("%s\n", message).getBytes();
-      Files.write(path, bytes);
+      switch (command.redirectType) {
+        case stdout -> {
+          var bytes = String.format("%s\n", message).getBytes();
+          Files.write(path, bytes);
+        }
+        case stderr -> {
+          Files.write(path, "".getBytes());
+          System.out.println(message);
+        }
+      }
     } else {
       System.out.println(message);
     }
@@ -226,8 +239,16 @@ public class Main {
       var redirectType = command.redirectType;
       if (Objects.nonNull(redirectType)) {
         var file = Path.of(command.redirectTo).toFile();
-        processBuilder.redirectOutput(file);
-        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        switch (redirectType) {
+          case stdout -> {
+            processBuilder.redirectOutput(file);
+            processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+          }
+          case stderr -> {
+            processBuilder.redirectError(file);
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+          }
+        }
       } else {
         processBuilder.inheritIO();
       }
