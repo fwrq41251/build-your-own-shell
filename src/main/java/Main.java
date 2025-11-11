@@ -36,7 +36,8 @@ public class Main {
     }
   }
 
-  record Command(String command, String[] args, String[] commandWithArgs) {
+  record Command(String command, String[] args, String[] commandWithArgs, RedirectType redirectType,
+      String redirectTo) {
   }
 
   private static Command parse(String command) {
@@ -49,10 +50,41 @@ public class Main {
       throw new IllegalArgumentException("command cannot be empty");
     }
 
-    String[] commandWithArgs = split.toArray(new String[0]);
-    String[] args = Arrays.copyOfRange(commandWithArgs, 1, commandWithArgs.length);
+    String[] splitArray = split.toArray(new String[0]);
 
-    return new Command(split.get(0), args, commandWithArgs);
+    if (splitArray.length == 1) {
+      // no args
+      return new Command(split.get(0), new String[0], splitArray, null, "");
+    }
+
+    var rediect = getRedirect(splitArray);
+    var rediectAt = rediect.redirectAt;
+    String[] args = Arrays.copyOfRange(splitArray, 1, rediectAt);
+    var commandWithArgs = Arrays.copyOf(splitArray, rediectAt);
+    var redirectTo = rediect.redirectType != null ? splitArray[rediectAt + 1] : "";
+
+    return new Command(split.get(0), args, commandWithArgs, rediect.redirectType, redirectTo);
+  }
+
+  private static Redirect getRedirect(String[] split) {
+    var rediectAt = split.length;
+    RedirectType type = null;
+    for (int i = 0; i < split.length; i++) {
+      var s = split[i];
+      if (s.equals(">") || s.equals("1>")) {
+        rediectAt = i;
+        type = RedirectType.stdout;
+        break;
+      }
+    }
+    return new Redirect(type, rediectAt);
+  }
+
+  private record Redirect(RedirectType redirectType, int redirectAt) {
+  }
+
+  private enum RedirectType {
+    stdout, stderr
   }
 
   private enum QuteMode {
@@ -142,8 +174,7 @@ public class Main {
         System.exit(status);
       }
       case echo -> {
-        var message = String.join(" ", command.args);
-        System.out.println(message);
+        runEcho(command);
       }
       case type -> {
         runType(command);
@@ -154,6 +185,17 @@ public class Main {
       case cd -> {
         runCd(command);
       }
+    }
+  }
+
+  private static void runEcho(Command command) throws IOException {
+    var message = String.join(" ", command.args);
+    if (command.redirectType == RedirectType.stdout) {
+      var path = Path.of(command.redirectTo);
+      var bytes = String.format("%s\n", message).getBytes();
+      Files.write(path, bytes);
+    } else {
+      System.out.println(message);
     }
   }
 
@@ -181,11 +223,17 @@ public class Main {
     var executable = findExecutable(command.command);
     if (executable != null) {
       var processBuilder = new ProcessBuilder(command.commandWithArgs);
-      processBuilder.inheritIO();
+      var redirectType = command.redirectType;
+      if (Objects.nonNull(redirectType)) {
+        var file = Path.of(command.redirectTo).toFile();
+        processBuilder.redirectOutput(file);
+        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT);
+      } else {
+        processBuilder.inheritIO();
+      }
       var process = processBuilder.start();
       int exitCode = process.waitFor();
       if (exitCode != 0) {
-        System.out.println(command.command + " exited with error code: " + exitCode);
       }
     } else {
       var error = String.format("%s: command not found", command.command);
