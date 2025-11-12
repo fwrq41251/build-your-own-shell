@@ -80,6 +80,30 @@ public class Trie {
         return results;
     }
 
+    public String getLongestCommonPrefix(String prefix) {
+        var currentNode = root;
+        StringBuilder commonPrefix = new StringBuilder();
+        for (char c : prefix.toCharArray()) {
+            var childNode = containsChild(currentNode, c);
+            if (childNode == null) {
+                break; // No further common prefix
+            } else {
+                commonPrefix.append(c);
+                currentNode = childNode;
+            }
+        }
+        
+        if (currentNode == root) {
+            return ""; // No common prefix found
+        }
+
+        while (currentNode.children.size() == 1 && !currentNode.isEndOfWord) {
+            currentNode = currentNode.children.getFirst();
+            commonPrefix.append(currentNode.value);
+        }
+        return commonPrefix.toString();
+    }
+
     private void collectWords(TrieNode node, StringBuilder prefix, List<String> results) {
         if (node.isEndOfWord) {
             results.add(prefix.toString());
@@ -100,6 +124,15 @@ public class Trie {
         trie.insert("app");
         System.out.println(trie.search("app"));     // true
         System.out.println(trie.getWordsWithPrefix("ap")); // [apple, app]
+        System.out.println(trie.getLongestCommonPrefix("bce")); // ap
+
+
+        trie.insert("xyz_foo");
+        trie.insert("xyz_foo_bar");
+        trie.insert("xyz_foo_bar_baz");
+        System.out.println(trie.getLongestCommonPrefix("xyz_")); // [xyz_foo, xyz_foo_bar,
+        // xyz_foo_bar_baz]
+        System.out.println(trie.getLongestCommonPrefix("xyz_foo_")); // [xyz_foo_bar_baz]
     }
 
     private static class TrieNode {

@@ -25,23 +25,38 @@ public class MyCompleter implements Completer {
 
         var allMatches = trie.getWordsWithPrefix(currentWord);
 
-        if (allMatches.size() == 1) {
-            candidates.add(new Candidate(allMatches.getFirst()));
-            lastPrefix = null;
+        if (allMatches.isEmpty()) {
             return;
         }
 
-        if (allMatches.size() > 1) {
-            if (currentWord.equals(lastPrefix)) {
-                Collections.sort(allMatches);
-                var matchesStr = String.join("  ", allMatches);
-                System.out.println("\n" + matchesStr);
-                reader.callWidget(LineReader.REDRAW_LINE);
-                lastPrefix = null;
+        if (allMatches.size() == 1) {
+            candidates.add(new Candidate(allMatches.getFirst()));
+        } else {
+            String lcp = trie.getLongestCommonPrefix(currentWord);
+            if (lcp.length() > currentWord.length()) {
+                candidates.add(new Candidate(
+                        lcp,    // value to insert
+                        lcp,    // value to display
+                        null,   // group
+                        null,   // description
+                        null,   // suffix
+                        null,   // key
+                        false   // <-- 关键！告诉 JLine 这是一个不完整的补全，不要加空格！
+                ));
             } else {
-                reader.getTerminal().puts(org.jline.utils.InfoCmp.Capability.bell);
-                lastPrefix = currentWord;
+                // Multiple matches but no further common prefix
+                if (currentWord.equals(lastPrefix)) {
+                    Collections.sort(allMatches);
+                    var matchesStr = String.join("  ", allMatches);
+                    System.out.println("\n" + matchesStr);
+                    reader.callWidget(LineReader.REDRAW_LINE);
+                    lastPrefix = null;
+                } else {
+                    reader.getTerminal().puts(org.jline.utils.InfoCmp.Capability.bell);
+                    lastPrefix = currentWord;
+                }
             }
         }
     }
+
 }
