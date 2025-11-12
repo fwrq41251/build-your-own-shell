@@ -4,7 +4,7 @@
 
 This project is a Java-based solution for the "Build Your Own Shell" challenge from CodeCrafters. The goal is to create a POSIX-compliant shell capable of interpreting commands, running external programs, and implementing built-in commands like `cd`, `pwd`, and `echo`.
 
-The project is structured as a standard Maven project. The main application logic is located in `src/main/java/Main.java`.
+The project is structured as a standard Maven project. The main application logic is located in `src/main/java/org.winry.Main.java`.
 
 ## Building and Running
 
