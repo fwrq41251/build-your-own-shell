@@ -2,7 +2,6 @@ package org.winry;
 
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.impl.DefaultParser;
-import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
@@ -26,10 +25,10 @@ public class Main {
         parser.setEscapeChars(new char[0]);
 
         var executables = findExecutables();
-        var stringsCompleter = new StringsCompleter(executables);
+        var completer = new MyCompleter(executables);
         var lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
-                .completer(stringsCompleter)
+                .completer(completer)
                 .parser(parser)
                 .build();
 
