@@ -17,5 +17,9 @@ target/
 .project
 .settings/
 
+# IntelliJ IDEA
+.idea/
+*.iml
+
 # Temporary files
 /tmp/codecrafters-build-shell-java/
