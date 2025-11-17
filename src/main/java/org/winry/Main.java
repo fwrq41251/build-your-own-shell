@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 public class Main {
     private static final String HOME = "~";
     private static final String PATH = "PATH";
+    public static final String HIST_FILE = "HISTFILE";
     private static Path PWD = Paths.get(System.getProperty("user.dir"));
     private static List<String> historyList = new ArrayList<>();
     private static int persistentHistoryIndex = 0;
@@ -52,11 +53,12 @@ public class Main {
         var historyFile = getHistoryFilePath();
         if (historyFile != null && Files.exists(historyFile)) {
             historyList.addAll(Files.readAllLines(historyFile));
+            persistentHistoryIndex = historyList.size();
         }
     }
 
     private static Path getHistoryFilePath() {
-        var pathEnv = System.getenv("HISTFILE");
+        var pathEnv = System.getenv(HIST_FILE);
         if (pathEnv != null) {
             return Path.of(pathEnv);
         }
@@ -74,7 +76,8 @@ public class Main {
                 if (status == 0) {
                     var historyFile = getHistoryFilePath();
                     if (historyFile != null) {
-                        Files.write(historyFile, historyList, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                        var toAppend = historyList.subList(persistentHistoryIndex, historyList.size());
+                        Files.write(historyFile, toAppend, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
                     }
                 }
                 System.exit(status);
