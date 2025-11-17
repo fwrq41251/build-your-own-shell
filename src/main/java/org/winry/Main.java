@@ -5,10 +5,7 @@ import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.TerminalBuilder;
 
 import java.io.*;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -37,8 +34,9 @@ public class Main {
                 .parser(parser)
                 .build();
 
-        String prompt = "$ ";
+        readHistory();
 
+        String prompt = "$ ";
         while (true) {
             String line = lineReader.readLine(prompt);
 
@@ -46,6 +44,16 @@ public class Main {
                 historyList.add(line);
                 var commandLine = parse(line);
                 run(commandLine);
+            }
+        }
+    }
+
+    private static void readHistory() throws IOException {
+        var pathEnv = System.getenv("HISTFILE");
+        if (pathEnv != null) {
+            var historyFile = Path.of(pathEnv);
+            if (Files.exists(historyFile)) {
+                historyList.addAll(Files.readAllLines(historyFile));
             }
         }
     }
@@ -139,8 +147,7 @@ public class Main {
                         var arg1 = args[1];
                         var historyFile = Path.of(arg1);
                         var toAppend = historyList.subList(persistentHistoryIndex, historyList.size());
-                        Files.write(historyFile, toAppend, java.nio.file.StandardOpenOption.CREATE,
-                                java.nio.file.StandardOpenOption.APPEND);
+                        Files.write(historyFile, toAppend, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
                         persistentHistoryIndex = historyList.size();
                         return;
                     }
