@@ -119,7 +119,19 @@ public class Main {
 
             @Override
             public void run(String[] args, InputStream in, OutputStream out, OutputStream err) throws Exception {
-                var limit = args.length > 0 ? Integer.parseInt(args[0]) : historyList.size();
+                var limit = historyList.size();
+                if (args.length > 0) {
+                    var arg0 = args[0];
+                    if (arg0.equals("-r")) {
+                        var arg1 = args[1];
+                        var historyFile = Path.of(arg1);
+                        historyList.addAll(Files.readAllLines(historyFile));
+                        return;
+                    }
+                    if (isInteger(arg0)) {
+                        limit = Integer.parseInt(args[0]);
+                    }
+                }
                 limit = Math.min(limit, historyList.size());
                 var start = Math.max(0, historyList.size() - limit);
                 for (int i = start; i < historyList.size(); i++) {
@@ -137,6 +149,15 @@ public class Main {
             }
         }
 
+    }
+
+    private static boolean isInteger(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private static void write(OutputStream out, String message) throws IOException {
