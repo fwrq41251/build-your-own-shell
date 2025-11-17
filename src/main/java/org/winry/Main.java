@@ -113,6 +113,11 @@ public class Main {
                     PWD = newPath;
                 }
             }
+        }, history {;
+
+            @Override
+            public void run(String[] args, InputStream in, OutputStream out, OutputStream err) throws Exception {
+            }
         };
 
         static BuiltInCommand of(String name) {
