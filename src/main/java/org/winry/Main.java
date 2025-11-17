@@ -19,6 +19,7 @@ public class Main {
     private static final String PATH = "PATH";
     private static Path PWD = Paths.get(System.getProperty("user.dir"));
     private static List<String> historyList = new ArrayList<>();
+    private static int persistentHistoryIndex = 0;
 
     public static void main(String[] args) throws Exception {
         var terminal = TerminalBuilder.builder()
@@ -132,6 +133,15 @@ public class Main {
                         var arg1 = args[1];
                         var historyFile = Path.of(arg1);
                         Files.write(historyFile, historyList);
+                        return;
+                    }
+                    if (arg0.equals("-a")) {
+                        var arg1 = args[1];
+                        var historyFile = Path.of(arg1);
+                        var toAppend = historyList.subList(persistentHistoryIndex, historyList.size());
+                        Files.write(historyFile, toAppend, java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                        persistentHistoryIndex = historyList.size();
                         return;
                     }
                     if (isInteger(arg0)) {
