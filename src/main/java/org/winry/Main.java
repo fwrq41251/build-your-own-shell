@@ -49,13 +49,18 @@ public class Main {
     }
 
     private static void readHistory() throws IOException {
+        var historyFile = getHistoryFilePath();
+        if (historyFile != null && Files.exists(historyFile)) {
+            historyList.addAll(Files.readAllLines(historyFile));
+        }
+    }
+
+    private static Path getHistoryFilePath() {
         var pathEnv = System.getenv("HISTFILE");
         if (pathEnv != null) {
-            var historyFile = Path.of(pathEnv);
-            if (Files.exists(historyFile)) {
-                historyList.addAll(Files.readAllLines(historyFile));
-            }
+            return Path.of(pathEnv);
         }
+        return null;
     }
 
     enum BuiltInCommand implements RunBuiltin {
@@ -65,6 +70,12 @@ public class Main {
                 int status = 0;
                 if (args.length != 0) {
                     status = Integer.parseInt(args[0]);
+                }
+                if (status == 0) {
+                    var historyFile = getHistoryFilePath();
+                    if (historyFile != null) {
+                        Files.write(historyFile, historyList, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                    }
                 }
                 System.exit(status);
             }
