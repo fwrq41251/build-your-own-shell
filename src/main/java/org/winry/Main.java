@@ -119,7 +119,10 @@ public class Main {
 
             @Override
             public void run(String[] args, InputStream in, OutputStream out, OutputStream err) throws Exception {
-                for (int i = 0; i < historyList.size(); i++) {
+                var limit = args.length > 0 ? Integer.parseInt(args[0]) : historyList.size();
+                limit = Math.min(limit, historyList.size());
+                var start = Math.max(0, historyList.size() - limit);
+                for (int i = start; i < historyList.size(); i++) {
                     var entry = String.format("%d  %s", i + 1, historyList.get(i));
                     write(out, entry);
                 }
