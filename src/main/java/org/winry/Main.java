@@ -18,6 +18,7 @@ public class Main {
     private static final String HOME = "~";
     private static final String PATH = "PATH";
     private static Path PWD = Paths.get(System.getProperty("user.dir"));
+    private static List<String> historyList = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         var terminal = TerminalBuilder.builder()
@@ -41,6 +42,7 @@ public class Main {
             String line = lineReader.readLine(prompt);
 
             if (line != null && !line.isEmpty()) {
+                historyList.add(line);
                 var commandLine = parse(line);
                 run(commandLine);
             }
@@ -117,6 +119,10 @@ public class Main {
 
             @Override
             public void run(String[] args, InputStream in, OutputStream out, OutputStream err) throws Exception {
+                for (int i = 0; i < historyList.size(); i++) {
+                    var entry = String.format("%d  %s", i + 1, historyList.get(i));
+                    write(out, entry);
+                }
             }
         };
 
