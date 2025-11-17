@@ -433,8 +433,10 @@ public class Main {
 
                     process.waitFor(); // 等待当前进程结束
                 } finally {
-                    // 在进程结束后，关闭输出流，通知下游 EOF
-                    currentOutputStream.close();
+                    if (currentOutputStream != System.out) {
+                        // 执行完后必须关闭输出流，以通知下游 EOF
+                        currentOutputStream.close();
+                    }
                 }
             }
 
