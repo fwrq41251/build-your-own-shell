@@ -128,6 +128,12 @@ public class Main {
                         historyList.addAll(Files.readAllLines(historyFile));
                         return;
                     }
+                    if (arg0.equals("-w")) {
+                        var arg1 = args[1];
+                        var historyFile = Path.of(arg1);
+                        Files.write(historyFile, historyList);
+                        return;
+                    }
                     if (isInteger(arg0)) {
                         limit = Integer.parseInt(args[0]);
                     }
